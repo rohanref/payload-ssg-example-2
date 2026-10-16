@@ -17,8 +17,10 @@ Getting a 404 page working for the static site also requires a bit of "creativit
    - Create a `.env` file with at least:
      ```env
      PAYLOAD_SECRET=your-secret
-     DATABASE_URI=file:./payload-test.db
+       DATABASE_URL=postgres://user:password@localhost:5432/payload
+       NEXT_PUBLIC_SERVER_URL=http://localhost:3000
      ```
+    - Create Pages in `/admin/collections/pages`. Pages support drafts and live preview at their slug URL.
 
 3. **Run the development server:**
    ```bash
