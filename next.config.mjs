@@ -4,6 +4,8 @@ const isStaticMode = process.env.BUILD_MODE === 'static';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Base folder on cPanel
+  // basePath: '/ssg-test',
   // Static pages always get included in all build types
   pageExtensions: ["static.tsx", "static.ts", "static.jsx", "static.js"]
 };

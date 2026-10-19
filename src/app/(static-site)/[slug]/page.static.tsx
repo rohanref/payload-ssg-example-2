@@ -3,7 +3,6 @@ import config from "@payload-config";
 import { notFound } from "next/navigation";
 import { getPayload } from "payload";
 import { RefreshRouteOnSave } from "../RefreshRouteOnSave";
-import styles from "../page.module.css";
 
 const isStaticMode = process.env.BUILD_MODE === "static";
 
@@ -29,10 +28,10 @@ export default async function Page({
   if (!page) notFound();
 
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
+    <div>
+      <main className="bg-black text-white justify-center">
         {!isStaticMode && <RefreshRouteOnSave />}
-        <h1>{page.title}</h1>
+        <h1 className="font-normal text-xs">{page.title}</h1>
         <p>Slug: {page.slug}</p>
         {page.content && <RichText data={page.content} />}
       </main>
