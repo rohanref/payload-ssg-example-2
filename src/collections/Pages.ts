@@ -35,5 +35,43 @@ export const Pages: CollectionConfig = {
       type: "richText",
       required: true,
     },
+    {
+      type: "tabs",
+      tabs: [
+        {
+          label: "SEO",
+          fields: [
+            {
+              name: "metaTitle",
+              type: "text",
+              label: "Meta Title",
+              admin: {
+                description:
+                  "The title displayed in search engine results and browser tabs.",
+              },
+            },
+            {
+              name: "metaImage",
+              type: "upload",
+              relationTo: "media",
+              label: "Meta Image",
+              admin: {
+                description:
+                  "The image used for social sharing previews, such as Open Graph.",
+              },
+            },
+            {
+              name: "metaDescription",
+              type: "textarea",
+              label: "Meta Description",
+              admin: {
+                description:
+                  "A short summary of this page for search engines and social previews.",
+              },
+            },
+          ],
+        },
+      ],
+    },
   ],
 };

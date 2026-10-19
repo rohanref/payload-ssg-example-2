@@ -69,16 +69,24 @@ export interface Config {
   collections: {
     users: User;
     pages: Page;
+    media: Media;
     'payload-kv': PayloadKv;
+    'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    'payload-folders': {
+      documentsAndFolders: 'payload-folders' | 'media';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -166,9 +174,66 @@ export interface Page {
     };
     [k: string]: unknown;
   };
+  /**
+   * The title displayed in search engine results and browser tabs.
+   */
+  metaTitle?: string | null;
+  /**
+   * The image used for social sharing previews, such as Open Graph.
+   */
+  metaImage?: (number | null) | Media;
+  /**
+   * A short summary of this page for search engines and social previews.
+   */
+  metaDescription?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt?: string | null;
+  _objectKey?: string | null;
+  folder?: (number | null) | FolderInterface;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders".
+ */
+export interface FolderInterface {
+  id: number;
+  name: string;
+  folder?: (number | null) | FolderInterface;
+  documentsAndFolders?: {
+    docs?: (
+      | {
+          relationTo?: 'payload-folders';
+          value: number | FolderInterface;
+        }
+      | {
+          relationTo?: 'media';
+          value: number | Media;
+        }
+    )[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  folderType?: 'media'[] | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -201,6 +266,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pages';
         value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'payload-folders';
+        value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -275,9 +348,30 @@ export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   content?: T;
+  metaTitle?: T;
+  metaImage?: T;
+  metaDescription?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  _objectKey?: T;
+  folder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -286,6 +380,18 @@ export interface PagesSelect<T extends boolean = true> {
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders_select".
+ */
+export interface PayloadFoldersSelect<T extends boolean = true> {
+  name?: T;
+  folder?: T;
+  documentsAndFolders?: T;
+  folderType?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
