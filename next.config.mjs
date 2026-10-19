@@ -1,29 +1,25 @@
 import { withPayload } from "@payloadcms/next/withPayload";
 
-const isStaticMode = process.env.BUILD_MODE === 'static';
+const isStaticMode = process.env.BUILD_MODE === "static";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Base folder on cPanel
-  // basePath: '/ssg-test',
-  // Static pages always get included in all build types
-  pageExtensions: ["static.tsx", "static.ts", "static.jsx", "static.js"]
+  ...(isStaticMode && {
+    // BASE PATH for cpanel host test
+    basePath: "/ssg-test",
+    output: "export",
+    distDir: "dist",
+  }),
+
+  pageExtensions: ["static.tsx", "static.ts", "static.jsx", "static.js"],
 };
 
-if (isStaticMode) {
-  nextConfig.output = "export";
-  nextConfig.distDir = "dist";
-} else {
-  // Dynamic pages only get included when we are not doing a static build
+if (!isStaticMode) {
   nextConfig.pageExtensions.push("tsx", "ts", "jsx", "js");
 }
 
 function withStaticPayload(nextConfig) {
-  if (isStaticMode) {
-    return nextConfig;
-  } else {
-    return withPayload(nextConfig);
-  }
+  return isStaticMode ? nextConfig : withPayload(nextConfig);
 }
 
 export default withStaticPayload(nextConfig);

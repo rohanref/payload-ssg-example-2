@@ -29,10 +29,10 @@ export default async function Page({
 
   return (
     <div>
-      <main className="bg-black text-white justify-center">
+      <main className="bg-black text-white flex flex-col items-center">
         {!isStaticMode && <RefreshRouteOnSave />}
-        <h1 className="font-normal text-xs">{page.title}</h1>
-        <p>Slug: {page.slug}</p>
+        <h1 className="font-bold text-3xl">{page.title}</h1>
+        <p className="text-xs">Slug: {page.slug}</p>
         {page.content && <RichText data={page.content} />}
       </main>
     </div>
