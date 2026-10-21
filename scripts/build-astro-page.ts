@@ -10,6 +10,50 @@ const projectRoot = path.resolve(__dirname, "..");
 const payloadURL = process.env.PAYLOAD_URL ?? "http://localhost:3000";
 const slug = process.env.PAGE_SLUG ?? "home";
 
+async function downloadImage(
+  image: any,
+  index: number,
+  imagesDir: string,
+): Promise<string | null> {
+  if (!image?.url) return null;
+
+  const imageURL = new URL(image.url, payloadURL);
+
+  const originalFilename = path.basename(
+    image.filename ?? imageURL.pathname,
+  );
+
+  const extension =
+    path.extname(originalFilename) ||
+    path.extname(imageURL.pathname) ||
+    ".img";
+
+  const imageFilename = path.basename(
+    image.filename ?? `image-${index}${extension}`,
+  );
+
+  const imagePath = path.join(imagesDir, imageFilename);
+
+  const response = await fetch(imageURL);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to download image: ${response.status} ${imageURL}`,
+    );
+  }
+
+  await mkdir(imagesDir, { recursive: true });
+
+  await writeFile(
+    imagePath,
+    Buffer.from(await response.arrayBuffer()),
+  );
+
+  console.log(`Downloaded image: ${imagePath}`);
+
+  return `images/${imageFilename}`;
+}
+
 async function main() {
   const apiURL = new URL("/api/pages", payloadURL);
 
@@ -33,68 +77,121 @@ async function main() {
     throw new Error(`No published page found for slug "${slug}".`);
   }
 
-  const contentHTML = page.content
-    ? convertLexicalToHTML({ data: page.content })
-    : "";
-
   const outputDir = path.join(projectRoot, "dist");
   const imagesDir = path.join(outputDir, "images");
 
-  let metaImageSrc: string | null = null;
+  const renderedBlocks = await Promise.all(
+  (page.layout ?? []).map(async (block: any, index: number) => {
+    switch (block.blockType) {
+      case "simpleContent": {
+        const contentHTML = block.content
+          ? convertLexicalToHTML({ data: block.content })
+          : "";
 
-  if (page.metaImage?.url) {
-    const imageURL = new URL(page.metaImage.url, payloadURL);
+        return {
+          component: "SimpleContent",
+          props: {
+            contentHTML,
+          },
+        };
+      }
 
-    // Preserve the file extension, falling back to .img.
-    const extension =
-      path.extname(page.metaImage.filename ?? "") ||
-      path.extname(imageURL.pathname) ||
-      ".img";
+      case "imageTextBackground": {
+        const image =
+          typeof block.image === "object" && block.image !== null
+            ? block.image
+            : null;
 
-    const imageId = page.metaImage.id ?? "meta";
-    const imageFilename = path.basename(
-      page.metaImage.filename ?? `meta-image${extension}`,
-    );
-    const imagePath = path.join(imagesDir, imageFilename);
+        const imageSrc = await downloadImage(
+          image,
+          index,
+          imagesDir,
+        );
 
-    const imageResponse = await fetch(imageURL);
+        const textHTML = block.text
+          ? convertLexicalToHTML({ data: block.text })
+          : "";
 
-    if (!imageResponse.ok) {
-      throw new Error(
-        `Failed to download meta image: ${imageResponse.status} ${imageURL}`,
-      );
+        return {
+          component: "ImageTextBackground",
+          props: {
+            imageSrc,
+            imageAlt: image?.alt ?? block.heading ?? "",
+            imagePosition: block.imagePosition ?? "left",
+            bgColor: block.bgColor ?? "black",
+            heading: block.heading ?? "",
+            textHTML,
+            buttons: (block.buttons ?? []).map((button: any) => ({
+              text: button.text,
+              link: button.link,
+              outline: button.outline ?? false,
+              btnColor: button.btnColor ?? "blue",
+            })),
+          },
+        };
+      }
+
+      default:
+        console.warn(
+          `Skipping unsupported block: ${block.blockType}`,
+        );
+        return null;
     }
+  }),
+);
 
-    await mkdir(imagesDir, { recursive: true });
-    await writeFile(
-      imagePath,
-      Buffer.from(await imageResponse.arrayBuffer()),
-    );
+const blocks = renderedBlocks.filter(
+  (block): block is NonNullable<typeof block> => block !== null,
+);
 
-    metaImageSrc = `/images/${imageFilename}`;
+const componentPaths: Record<string, string> = {
+  SimpleContent: "../components/SimpleContent.astro",
+  ImageTextBackground: "../components/ImageTextBackground.astro",
+};
 
-    console.log(`Downloaded image: ${imagePath}`);
-  }
+const usedComponents = [...new Set(blocks.map((block) => block.component))];
 
-  const astroTemplate = `---
-import PageContent from "../components/PageContent.astro";
+const imports = usedComponents
+  .map(
+    (component) =>
+      `import ${component} from ${JSON.stringify(componentPaths[component])};`,
+  )
+  .join("\n");
+
+const markup = blocks
+  .map((block) => {
+    const props = Object.entries(block.props)
+      .map(([key, value]) => {
+        return `${key}={${JSON.stringify(value)}}`;
+      })
+      .join("\n      ");
+
+    return `<${block.component}
+      ${props}
+    />`;
+  })
+  .join("\n\n  ");
+
+const astroTemplate = `---
+${imports}
 ---
 
-<PageContent
-  title={${JSON.stringify(page.title)}}
-  slug={${JSON.stringify(page.slug)}}
-  contentHTML={${JSON.stringify(contentHTML)}}
-  metaTitle={${JSON.stringify(page.metaTitle ?? null)}}
-  metaImage={${JSON.stringify(metaImageSrc)}}
-  metaDescription={${JSON.stringify(page.metaDescription ?? null)}}
-/>
+<main>
+  ${markup}
+</main>
 `;
 
-  await mkdir(outputDir, { recursive: true });
-  await writeFile(path.join(outputDir, "index.astro"), astroTemplate, "utf8");
+await mkdir(outputDir, { recursive: true });
 
-  console.log(`Generated: ${path.join(outputDir, "index.astro")}`);
-  console.log(`Source page: ${page.slug}`);
+await writeFile(
+  path.join(outputDir, "index.astro"),
+  astroTemplate,
+  "utf8",
+);
+
+console.log(`Generated: ${path.join(outputDir, "index.astro")}`);
+console.log(`Source page: ${page.slug}`);
+console.log(`Layout blocks: ${blocks.length}`);
 }
 
 main().catch((error) => {

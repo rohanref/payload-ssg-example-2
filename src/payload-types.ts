@@ -159,21 +159,67 @@ export interface Page {
   id: number;
   title: string;
   slug: string;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
+  layout: (
+    | {
+        content: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'simpleContent';
+      }
+    | {
+        imagePosition: 'left' | 'right';
+        bgColor?: ('black' | 'lightBlue' | 'darkBlue') | null;
+        image: number | Media;
+        heading: string;
+        text: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        /**
+         * Add up to two buttons.
+         */
+        buttons?:
+          | {
+              text: string;
+              /**
+               * Enter a URL or internal path, e.g. /about
+               */
+              link: string;
+              outline?: boolean | null;
+              btnColor?: ('white' | 'blue') | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'imageTextBackground';
+      }
+  )[];
   /**
    * The title displayed in search engine results and browser tabs.
    */
@@ -347,7 +393,37 @@ export interface UsersSelect<T extends boolean = true> {
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
-  content?: T;
+  layout?:
+    | T
+    | {
+        simpleContent?:
+          | T
+          | {
+              content?: T;
+              id?: T;
+              blockName?: T;
+            };
+        imageTextBackground?:
+          | T
+          | {
+              imagePosition?: T;
+              bgColor?: T;
+              image?: T;
+              heading?: T;
+              text?: T;
+              buttons?:
+                | T
+                | {
+                    text?: T;
+                    link?: T;
+                    outline?: T;
+                    btnColor?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+      };
   metaTitle?: T;
   metaImage?: T;
   metaDescription?: T;

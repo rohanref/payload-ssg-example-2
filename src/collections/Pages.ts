@@ -1,16 +1,22 @@
 import type { CollectionConfig } from "payload";
 
+import { SimpleContent } from "../blocks/SimpleContent";
+import { ImageTextBackground } from "../blocks/ImageTextBackground";
+
 export const Pages: CollectionConfig = {
   slug: "pages",
+
   access: {
     read: () => true,
   },
+
   admin: {
     useAsTitle: "title",
     livePreview: {
       url: ({ data }) => (data.slug ? `/${data.slug}` : "/"),
     },
   },
+
   versions: {
     drafts: {
       autosave: {
@@ -18,6 +24,7 @@ export const Pages: CollectionConfig = {
       },
     },
   },
+
   fields: [
     {
       name: "title",
@@ -31,13 +38,24 @@ export const Pages: CollectionConfig = {
       unique: true,
     },
     {
-      name: "content",
-      type: "richText",
-      required: true,
-    },
-    {
       type: "tabs",
       tabs: [
+        {
+          label: "Content",
+          fields: [
+            {
+              name: "layout",
+              type: "blocks",
+              label: "Page Layout",
+              required: true,
+              minRows: 1,
+              blocks: [
+                SimpleContent,
+                ImageTextBackground,
+              ],
+            },
+          ],
+        },
         {
           label: "SEO",
           fields: [
