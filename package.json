@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "payload": "payload",
-    "preview": "servor dist"
+    "preview": "servor dist",
+    "build:astro": "tsx scripts/build-astro-page.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.91.0",
